@@ -1,0 +1,10 @@
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/01_particle_animation/CMakeFiles/01_particle_animation.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/01_particle_animation/CMakeFiles/ALL_BUILD.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/02_particles_framework/CMakeFiles/02_particles_framework.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/02_particles_framework/CMakeFiles/ALL_BUILD.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/03_constraints_framework/CMakeFiles/03_constraints_framework.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/03_constraints_framework/CMakeFiles/ALL_BUILD.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/04_rigid_body_framework/CMakeFiles/04_rigid_body_framework.dir
+C:/Users/giana/Desktop/Year 3 TRI 2/Physics-Based Animation/set09119-master/code/build/04_rigid_body_framework/CMakeFiles/ALL_BUILD.dir

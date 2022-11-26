@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\giana\Desktop\Year 3 TRI 2\Physics-Based Animation\set09119-master\code\01_particle_animation\01_particle_animation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\giana\Desktop\Year 3 TRI 2\Physics-Based Animation\set09119-master\code\01_particle_animation\Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\giana\Desktop\Year 3 TRI 2\Physics-Based Animation\set09119-master\code\01_particle_animation\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\giana\Desktop\Year 3 TRI 2\Physics-Based Animation\set09119-master\code\01_particle_animation\Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\giana\Desktop\Year 3 TRI 2\Physics-Based Animation\set09119-master\code\01_particle_animation\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{9480C9AE-7B25-3F07-9F01-D0999283B3C1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DC9288C5-B06E-3566-ACB2-355DE7C07A69}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
