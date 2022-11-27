@@ -21,7 +21,7 @@ void SymplecticEuler(vec3& pos, vec3& vel, float mass, const vec3& accel, const 
 	pos += vel * dt;
 }
 
-vec3 CollisionImpulse(Particle& p, const glm::vec3 cubeCentre, float cubeHalfExtent, float coeffOfRestitution)
+void CollisionImpulse(Particle& p, const glm::vec3 cubeCentre, float cubeHalfExtent, float coeffOfRestitution)
 {
 	vec3 impulse{ 0.0f };
 	vec3 surfaceNorm{ 0.0f };
@@ -66,7 +66,7 @@ vec3 CollisionImpulse(Particle& p, const glm::vec3 cubeCentre, float cubeHalfExt
 	}
 
 	impulse = -(1.0f + coeffOfRestitution) * p.Mass() * glm::dot(p.Velocity(), surfaceNorm) * surfaceNorm;
-	return impulse;
+	p.SetVelocity(p.Velocity() + impulse / p.Mass());
 }
 
 bool DetectCollisionBetweenSpheres(Particle& p1, Particle& p2)
@@ -111,8 +111,8 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 	// Initialise ground
 	ground.SetMesh(meshDb.Get("cube"));
 	ground.SetShader(defaultShader);
-	ground.SetScale(vec3(30.0f));
-	for(int i = 0; i < 2; i++)
+	ground.SetScale(vec3(10.0f));
+	for(int i = 0; i < 3; i++)
 	{
 		Particle p;
 		p.SetMesh(meshDb.Get("sphere"));
@@ -125,13 +125,17 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 		particles.push_back(p);
 	}
 
-	particles[0].SetPosition(vec3(5.0f, 0.0f, 0.0f));
-	particles[1].SetPosition(vec3(-5.0f, 0.0f, 0.0f));
+	particles[0].SetPosition(vec3(0.0f, 0.0f, 0.0f));
+	particles[1].SetPosition(vec3(5.0f, 0.0f, 0.0f));
+	particles[2].SetPosition(vec3(-5.0f, 0.0f, 0.0f));
 
-	particles[0].SetVelocity(vec3(-20.0f, 0.0f, 0.0f));
-	particles[1].SetVelocity(vec3(20.0f, 0.0f, 0.0f));
+	particles[0].SetVelocity(vec3(0.0f, 0.0f, 0.0f));
+	particles[1].SetVelocity(vec3(-20.0f, 0.0f, 0.0f));
+	particles[2].SetVelocity(vec3(20.0f, 0.0f, 0.0f));
 
-	particles[1].SetScale(vec3(0.5f));
+	particles[0].SetScale(vec3(1.0f));
+	particles[1].SetScale(vec3(2.0f));
+	particles[2].SetScale(vec3(3.0f));
 	camera = Camera(vec3(0, 5, 10));
 }
 
@@ -144,15 +148,6 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 		for (int i = 0; i < particles.size(); i++)
 		{
 			particles[i].ClearForcesImpulses();
-			particles[i].ApplyImpulse(CollisionImpulse(particles[i], vec3(0.0f), 30.0f, 0.85f));
-
-			for (int j = i + 1; j < particles.size(); j++)
-			{
-				if (DetectCollisionBetweenSpheres(particles[i], particles[j]))
-				{
-					ResolveStaticCollision(particles[i], particles[j]);
-				}
-			}
 
 			Force::Gravity(particles[i]);
 
@@ -167,8 +162,35 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 
 		}
 
+		for(int i = 0; i < particles.size(); i++)
+		{
+			CollisionImpulse(particles[i], vec3(0.0f), 10.0f, 0.85f);
+
+			for (int j = i + 1; j < particles.size(); j++)
+			{
+				if (DetectCollisionBetweenSpheres(particles[i], particles[j]))
+				{
+					ResolveStaticCollision(particles[i], particles[j]);
+
+					vec3 normal = glm::normalize(particles[j].Position() - particles[i].Position());
+
+					float meff = 1 / ((1 / particles[i].Mass()) + (1 / particles[j].Mass()));
+
+					float impactSpeed = glm::dot(normal, (particles[i].Velocity() - particles[j].Velocity()));
+
+					float impulse = (1 + 0.85) * meff * impactSpeed;
+
+					vec3 dVel1 = -(impulse / particles[i].Mass() * normal);
+					vec3 dVel2 = +(impulse / particles[j].Mass() * normal);
+
+					particles[i].SetVelocity(particles[i].Velocity() + dVel1);
+					particles[j].SetVelocity(particles[j].Velocity() + dVel2);
+				}
+			}
+		}
+
 	}
-	
+
 
 
 }
