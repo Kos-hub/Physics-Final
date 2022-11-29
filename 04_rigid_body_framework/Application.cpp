@@ -165,6 +165,7 @@ int Application::InitWindow() {
 // clear buffer
 void Application::MainLoop() {
 
+
 	// Initialise graphics
 	InitWindow();
 
@@ -174,12 +175,12 @@ void Application::MainLoop() {
 	m_physEngine.Init(camera, meshDb, shaderDb);
 
 	// Prepare some time bookkeeping
-	const GLfloat timeStart = (GLfloat)glfwGetTime(); 
+	const GLfloat timeStart = (GLfloat)glfwGetTime();
 	GLfloat lastFrameTimeSinceStart = 0.0f;
 
 	// Timestep init
-	double t = 0.0f;
-	double dt = 0.001f;
+	double t = 0.0;
+	double dt = 1.0f/60.0f;
 
 	double currentTime = (GLfloat)glfwGetTime();
 	double accumulator = 0.0f;
@@ -192,11 +193,6 @@ void Application::MainLoop() {
 		currentTime = newTime;
 
 		accumulator += frameTime;
-
-		// Calculate view and projection matrices
-		auto projection = glm::perspective(camera.GetZoom(), (GLfloat)m_width / (GLfloat)m_height, 0.1f, 1000.0f);
-		auto view = camera.GetViewMatrix();
-
 
 		// poll input events
 		glfwPollEvents();
@@ -213,6 +209,9 @@ void Application::MainLoop() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Calculate view and projection matrices
+		auto projection = glm::perspective(camera.GetZoom(), (GLfloat)m_width / (GLfloat)m_height, 0.1f, 1000.0f);
+		auto view = camera.GetViewMatrix();
 
 		while (accumulator >= dt)
 		{
@@ -221,14 +220,13 @@ void Application::MainLoop() {
 			accumulator -= dt;
 			t += dt;
 		}
-
 		// Draw all the objects in the physics engine
 		m_physEngine.Display(view, projection);
 
 		// Swap the buffers
 		glfwSwapBuffers(m_window);
 	}
-	
+
 	glfwTerminate();
 }
 
