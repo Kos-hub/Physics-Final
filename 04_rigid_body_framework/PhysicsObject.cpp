@@ -21,9 +21,38 @@ void PhysicsBody::Draw(const glm::mat4& viewMatrix, const glm::mat4& projectionM
 	m_mesh->DrawVertexArray();
 }
 
+void RigidBody::SetScale(const glm::vec3& scale)
+{
+	Particle::SetScale(scale);
+
+	SetInertiaTensor();
+}
+
+void RigidBody::SetMass(float mass)
+{
+	Particle::SetMass(mass);
+
+	SetInertiaTensor();
+}
+
 glm::mat3 RigidBody::InverseInertia()
 {
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// TODO: Calculate the matrix
-	return glm::mat3(1.0f);
+	return this->Orientation() * glm::mat4(glm::inverse(m_inertiaTensor)) * glm::transpose(this->Orientation());
+}
+
+glm::mat3 RigidBody::Inertia()
+{
+	return this->Orientation() * glm::mat4(m_inertiaTensor) * glm::transpose(this->Orientation());
+}
+
+
+void RigidBody::SetInertiaTensor()
+{
+	glm::mat3 inertiaTensor(1.0f);
+	inertiaTensor[0][0] = (1.0f / 12.0f) * this->Mass() * ((this->Scale().y * 2) * (this->Scale().y * 2) + (this->Scale().z * 2) * (this->Scale().z * 2));
+	inertiaTensor[1][1] = (1.0f / 12.0f) * this->Mass() * ((this->Scale().x * 2) * (this->Scale().x * 2) + (this->Scale().z * 2) * (this->Scale().z * 2));
+	inertiaTensor[2][2] = (1.0f / 12.0f) * this->Mass() * ((this->Scale().x * 2) * (this->Scale().x * 2) + (this->Scale().y * 2) * (this->Scale().y * 2));
+
+
+	m_inertiaTensor = inertiaTensor;
 }

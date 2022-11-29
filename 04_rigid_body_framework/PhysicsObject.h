@@ -4,15 +4,24 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Mesh.h"
+#include <iterator>
+
 class Shader;
 class Mesh;
 class Force;
+
 
 // A generic renderable object, such as a particle or the ground, that we can render, move, rotate, etc
 class PhysicsBody
 {
 public:
-
+	struct EndPoint {
+		float EndPointValue;
+		bool isMin;
+		int axis;
+		PhysicsBody* Owner;
+	};
 	// If we're going to derive from this class, create a virtual destructor that does nothing
 	virtual ~PhysicsBody() {}
 
@@ -34,13 +43,13 @@ public:
 		return m_orientation;
 	}
 
-	const Mesh * GetMesh() const
-	{ 
-		return m_mesh; 
+	const Mesh* GetMesh() const
+	{
+		return m_mesh;
 	}
 
 	// we must initialise it with a mesh and a shader
-	void SetMesh(const Mesh * mesh)
+	void SetMesh(const Mesh* mesh)
 	{
 		m_mesh = mesh;
 	}
@@ -58,9 +67,65 @@ public:
 	void SetPosition(const glm::vec3& position)
 	{
 		m_position = position;
+
+		// Recalculate EPs everytime position updates.
+		// Min End Points
+		for (int i = 0; i < 3; i++)
+		{
+			if (i == 0)
+			{
+				endPointsXAxis[0].EndPointValue = m_position[i] - m_scale[i];
+				endPointsXAxis[0].Owner = this;
+				endPointsXAxis[0].axis = i;
+				endPointsXAxis[0].isMin = true;
+			}
+			else if (i == 1)
+			{
+				endPointsYAxis[0].EndPointValue = m_position[i] - m_scale[i];
+				endPointsYAxis[0].Owner = this;
+				endPointsYAxis[0].axis = i;
+				endPointsXAxis[0].isMin = true;
+
+			}
+			else 
+			{
+				endPointsZAxis[0].EndPointValue = m_position[i] - m_scale[i];
+				endPointsZAxis[0].Owner = this;
+				endPointsZAxis[0].axis = i;
+				endPointsXAxis[0].isMin = true;
+
+			}
+		}
+		// Max End Points
+		for (int i = 0; i < 3; i++)
+		{
+			if (i == 0)
+			{
+				endPointsXAxis[1].EndPointValue = m_position[i] + m_scale[i];
+				endPointsXAxis[1].Owner = this;
+				endPointsXAxis[1].axis = i;
+				endPointsXAxis[1].isMin = false;
+			}
+			else if (i == 1)
+			{
+				endPointsYAxis[1].EndPointValue = m_position[i] + m_scale[i];
+				endPointsYAxis[1].Owner = this;
+				endPointsYAxis[1].axis = i;
+				endPointsXAxis[1].isMin = false;
+
+			}
+			else
+			{
+				endPointsZAxis[1].EndPointValue = m_position[i] + m_scale[i];
+				endPointsZAxis[1].Owner = this;
+				endPointsZAxis[1].axis = i;
+				endPointsXAxis[1].isMin = false;
+
+			}
+		}
 	}
 
-	void SetScale(const glm::vec3& scale)
+	virtual void SetScale(const glm::vec3& scale)
 	{
 		m_scale = scale;
 	}
@@ -68,6 +133,7 @@ public:
 	void SetOrientation(const glm::mat4& m) {
 		m_orientation = m;
 	}
+
 
 	// translate mesh by a vector
 	void Translate(const glm::vec3& offset)
@@ -77,9 +143,10 @@ public:
 
 	// rotate mesh by an axis,angle pair
 	void Rotate(const float angleInRads, const glm::vec3& axis)
-	{ 
+	{
 		m_orientation = glm::rotate(m_orientation, angleInRads, axis);
-	} 
+
+	}
 
 	// getModel computes the model matrix any time it is required
 	const glm::mat4 ModelMatrix() const
@@ -88,6 +155,10 @@ public:
 		auto scaleMatrix = glm::scale(glm::mat4(1.0f), m_scale);
 		return translateMatrix * m_orientation * scaleMatrix;
 	}
+
+	EndPoint endPointsXAxis[2];
+	EndPoint endPointsYAxis[2];
+	EndPoint endPointsZAxis[2];
 
 private:
 
@@ -104,6 +175,7 @@ private:
 	glm::vec3 m_position = glm::vec3(0.0f);
 	glm::vec3 m_scale = glm::vec3(1.0f);
 	glm::mat4 m_orientation = glm::mat4(1.0f);
+
 };
 
 // A particle is a physics body without shape/size. 
@@ -112,7 +184,7 @@ class Particle : public PhysicsBody
 public:
 
 	void SetCoefficientOfRestitution(float cor) { m_cor = cor; }
-	void SetMass(float mass) { m_mass = mass; }
+	virtual void SetMass(float mass) { m_mass = mass; }
 	void SetVelocity(const glm::vec3& velocity) { m_velocity = velocity; }
 	
 	// Call this at the beginning of a simulation step
@@ -142,12 +214,19 @@ class RigidBody : public Particle
 public:
 	
 	void SetAngularVelocity(const glm::vec3& angVel) { m_angularVelocity = angVel; }
-	//void SetAngularAcceleration(const glm::vec3& angAccel) { m_angularAcceleration = angAccel; }
+	void SetAngularAcceleration(const glm::vec3& angAccel) { m_angularAcceleration = angAccel; }
 
 	const glm::vec3& AngularVelocity() const { return m_angularVelocity; }
-	//const glm::vec3& AngularAcceleration() const { return m_angularAcceleration; }
+	const glm::vec3& AngularAcceleration() const { return m_angularAcceleration; }
+
+	void SetScale(const glm::vec3& scale) override;
+	void SetMass(float mass) override;
+
 	glm::mat3 InverseInertia();
+	glm::mat3 Inertia();
+	void SetInertiaTensor();
 private:
 	glm::vec3 m_angularVelocity = glm::vec3(0.0f);
-	//glm::vec3 m_angularAcceleration = glm::vec3(0.0f);
+	glm::vec3 m_angularAcceleration = glm::vec3(0.0f);
+	glm::mat3 m_inertiaTensor = glm::mat3(1.0f);
 };
