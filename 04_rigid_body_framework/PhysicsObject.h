@@ -118,12 +118,12 @@ private:
 class Particle : public PhysicsBody
 {
 public:
-	struct EndPoint {
-		float EndPointValue;
-		bool isMin;
-		int axis;
-		Particle* Owner;
-	};
+	//struct EndPoint {
+	//	float EndPointValue;
+	//	bool isMin;
+	//	int axis;
+	//	Particle* Owner;
+	//};
 
 	void SetCoefficientOfRestitution(float cor) { m_cor = cor; }
 	virtual void SetMass(float mass) { m_mass = mass; }
@@ -143,56 +143,8 @@ public:
 		// Min End Points
 		for (int i = 0; i < 3; i++)
 		{
-			if (i == 0)
-			{
-				endPointsXAxis[0].EndPointValue = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
-				endPointsXAxis[0].Owner = this;
-				endPointsXAxis[0].axis = i;
-				endPointsXAxis[0].isMin = true;
-			}
-			else if (i == 1)
-			{
-				endPointsYAxis[0].EndPointValue = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
-				endPointsYAxis[0].Owner = this;
-				endPointsYAxis[0].axis = i;
-				endPointsYAxis[0].isMin = true;
-
-			}
-			else
-			{
-				endPointsZAxis[0].EndPointValue = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
-				endPointsZAxis[0].Owner = this;
-				endPointsZAxis[0].axis = i;
-				endPointsZAxis[0].isMin = true;
-
-			}
-		}
-		// Max End Points
-		for (int i = 0; i < 3; i++)
-		{
-			if (i == 0)
-			{
-				endPointsXAxis[1].EndPointValue = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
-				endPointsXAxis[1].Owner = this;
-				endPointsXAxis[1].axis = i;
-				endPointsXAxis[1].isMin = false;
-			}
-			else if (i == 1)
-			{
-				endPointsYAxis[1].EndPointValue = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
-				endPointsYAxis[1].Owner = this;
-				endPointsYAxis[1].axis = i;
-				endPointsYAxis[1].isMin = false;
-
-			}
-			else
-			{
-				endPointsZAxis[1].EndPointValue = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
-				endPointsZAxis[1].Owner = this;
-				endPointsZAxis[1].axis = i;
-				endPointsZAxis[1].isMin = false;
-
-			}
+			minEndPoints[i] = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
+			maxEndPoints[i] = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
 		}
 	}
 	
@@ -202,10 +154,8 @@ public:
 	const glm::vec3& AccumulatedImpulse() { return m_accumulatedImpulse; }
 	float CoefficientOfRestitution() { return m_cor; }
 
-
-	EndPoint endPointsXAxis[2];
-	EndPoint endPointsYAxis[2];
-	EndPoint endPointsZAxis[2];
+	glm::vec3 minEndPoints;
+	glm::vec3 maxEndPoints;
 private:
 	float m_cor = 0.9f;									// Coefficient of restitution
 	float m_mass = 1.0f;								// Particle mass, in kg

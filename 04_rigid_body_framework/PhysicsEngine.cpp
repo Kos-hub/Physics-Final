@@ -17,28 +17,33 @@ const glm::vec3 GRAVITY = glm::vec3(0, -9.81, 0);
 
 bool stop = false;
 
-bool CompareEndPoints(Particle::EndPoint a, Particle::EndPoint b)
+int sortAxis = 0;
+//bool CompareEndPoints(Particle::EndPoint a, Particle::EndPoint b)
+//{
+//	return a.EndPointValue < b.EndPointValue;
+//}
+//
+//void GenerateAndSortAxes(std::vector<Particle>& particles, std::vector<Particle::EndPoint>& endPointsXAxis, std::vector<Particle::EndPoint>& endPointsYAxis, std::vector<Particle::EndPoint>& endPointsZAxis)
+//{
+//	// Generate a list of all minEPs and maxEPs for each particle in the list
+//	for (int i = 0; i < particles.size(); i++)
+//	{
+//		endPointsXAxis.insert(endPointsXAxis.end(), std::begin(particles[i].endPointsXAxis), std::end(particles[i].endPointsXAxis));
+//
+//		endPointsYAxis.insert(endPointsYAxis.end(), std::begin(particles[i].endPointsYAxis), std::end(particles[i].endPointsYAxis));
+//
+//		endPointsZAxis.insert(endPointsZAxis.end(), std::begin(particles[i].endPointsZAxis), std::end(particles[i].endPointsZAxis));
+//	}
+//
+//	std::sort(endPointsXAxis.begin(), endPointsXAxis.end(), CompareEndPoints);
+//	std::sort(endPointsYAxis.begin(), endPointsYAxis.end(), CompareEndPoints);
+//	std::sort(endPointsZAxis.begin(), endPointsZAxis.end(), CompareEndPoints);
+//}
+
+bool compareParticles(Particle& p1, Particle& p2)
 {
-	return a.EndPointValue < b.EndPointValue;
+	return p1.minEndPoints[sortAxis] < p2.minEndPoints[sortAxis];
 }
-
-void GenerateAndSortAxes(std::vector<Particle>& particles, std::vector<Particle::EndPoint>& endPointsXAxis, std::vector<Particle::EndPoint>& endPointsYAxis, std::vector<Particle::EndPoint>& endPointsZAxis)
-{
-	// Generate a list of all minEPs and maxEPs for each particle in the list
-	for (int i = 0; i < particles.size(); i++)
-	{
-		endPointsXAxis.insert(endPointsXAxis.end(), std::begin(particles[i].endPointsXAxis), std::end(particles[i].endPointsXAxis));
-
-		endPointsYAxis.insert(endPointsYAxis.end(), std::begin(particles[i].endPointsYAxis), std::end(particles[i].endPointsYAxis));
-
-		endPointsZAxis.insert(endPointsZAxis.end(), std::begin(particles[i].endPointsZAxis), std::end(particles[i].endPointsZAxis));
-	}
-
-	std::sort(endPointsXAxis.begin(), endPointsXAxis.end(), CompareEndPoints);
-	std::sort(endPointsYAxis.begin(), endPointsYAxis.end(), CompareEndPoints);
-	std::sort(endPointsZAxis.begin(), endPointsZAxis.end(), CompareEndPoints);
-}
-
 void SymplecticEuler(vec3& pos, vec3& vel, float mass, const vec3& accel, const vec3& impulse, float dt)
 {
 	vel += accel * dt + impulse / mass;
@@ -137,7 +142,7 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 	ground.SetMesh(meshDb.Get("cube"));
 	ground.SetShader(defaultShader);
 	ground.SetScale(vec3(30.0f));
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 100; i++)
 	{
 		Particle p;
 		p.SetMesh(meshDb.Get("sphere"));
@@ -191,177 +196,60 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 			particles[i].SetPosition(position);
 			particles[i].SetVelocity(velocity);
 
-		}
-
-		std::vector<Particle::EndPoint> endPointsXAxis;
-		std::vector<Particle::EndPoint> endPointsYAxis;
-		std::vector<Particle::EndPoint> endPointsZAxis;
-
-		GenerateAndSortAxes(particles, endPointsXAxis, endPointsYAxis, endPointsZAxis);
-		// Implementing check for each axis
-		// Get a vector of pairs.
-		std::vector<std::pair<Particle*, Particle*>> vecOfPairs;
-		// Start from first axis, check for overlapping projections, if overlap, add to pairs.
-		for (int i = 0; i < endPointsXAxis.size() - 1; i++)
-		{
-			// For each object in the list, find its min on X List
-			if (endPointsXAxis[i].isMin)
-			{
-				PhysicsBody* currObj = endPointsXAxis[i].Owner;
-				int k = 1;
-				bool shouldPairY = false;
-				bool shouldPairZ = false;
-
-				while(endPointsXAxis[i+k].isMin || (!endPointsXAxis[i+k].isMin && endPointsXAxis[i].Owner != endPointsXAxis[i+k].Owner))
-				{
-
-					// Y Axis check
-					for(int y = 0; y < endPointsYAxis.size() - 1; y++)
-					{
-						if(currObj == endPointsYAxis[y].Owner && endPointsYAxis[y].isMin)
-						{
-							int a = 1;
-
-							while(endPointsYAxis[y+a].isMin || (!endPointsYAxis[y + a].isMin && endPointsYAxis[y].Owner != endPointsYAxis[y + a].Owner))
-							{
-								if(endPointsXAxis[i+k].Owner == endPointsYAxis[y+a].Owner)
-								{
-									shouldPairY = true;
-									break;
-								}
-								else
-								{
-									shouldPairY = false;
-								}
-								a++;
-							}
-
-
-						}
-						else if(shouldPairY)
-						{
-							break;
-						}
-
-					}
-
-					// Z Axis check
-					if(shouldPairY)
-					{
-						for (int z = 0; z < endPointsZAxis.size() - 1; z++)
-						{
-							if (currObj == endPointsZAxis[z].Owner && endPointsZAxis[z].isMin)
-							{
-								int b = 1;
-
-								while (endPointsZAxis[z + b].isMin || (!endPointsZAxis[z + b].isMin && endPointsZAxis[z].Owner != endPointsZAxis[z + b].Owner))
-								{
-									if (endPointsXAxis[i + k].Owner == endPointsZAxis[z + b].Owner)
-									{
-										shouldPairZ = true;
-										break;
-									}
-									else
-									{
-										shouldPairZ = false;
-									}
-									b++;
-								}
-
-								
-							}
-							else if (shouldPairZ)
-							{
-								break;
-							}
-						}
-					}
-
-
-					if(shouldPairY && shouldPairZ)
-					{
-							std::pair<Particle*, Particle*> newPair;
-							newPair.first = endPointsXAxis[i].Owner;
-							newPair.second = endPointsXAxis[i + k].Owner;
-
-							vecOfPairs.push_back(newPair);
-							stop = true;
-					}
-					k++;
-				}
-
-				//i += k - 1;
-				
-				//int k = 1;
-				//while (endPointsXAxis[i + k].isMin)
-				//{
-				//	std::pair<PhysicsBody*, PhysicsBody*> newPair;
-				//	newPair.first = endPointsXAxis[i].Owner;
-				//	newPair.second = endPointsXAxis[i + k].Owner;
-
-				//	vecOfPairs.push_back(newPair);
-				//	k++;
-				//}
-				//i += k - 1;
-				//stop = true;
-			}
-		}
-
-		
-		for (int i = 0; i < particles.size(); i++)
-		{
 			CollisionImpulse(particles[i], vec3(0.0f), 30.0f, 0.85f);
 
-			for(int k = 0; k < vecOfPairs.size(); k++)
-			{
-				if(DetectCollisionBetweenSpheres(*vecOfPairs[k].first, *vecOfPairs[k].second))
-				{
-					std::cout << "number of collisions : " << vecOfPairs.size() << std::endl;
-					if(vecOfPairs.size() == 2)
-					{
-						std::cout << "Stop" << std::endl;
-					}
-					ResolveStaticCollision(*vecOfPairs[k].first, *vecOfPairs[k].second);
-
-					vec3 normal = glm::normalize(vecOfPairs[k].first->Position() - vecOfPairs[k].second->Position());
-
-					float meff = 1 / ((1 / vecOfPairs[k].first->Mass()) + (1 / vecOfPairs[k].second->Mass()));
-
-					float impactSpeed = glm::dot(normal, (vecOfPairs[k].first->Velocity() - vecOfPairs[k].second->Velocity()));
-
-					float impulse = (1 + 0.85) * meff * impactSpeed;
-
-					vec3 dVel1 = -(impulse / vecOfPairs[k].first->Mass() * normal);
-					vec3 dVel2 = +(impulse / vecOfPairs[k].second->Mass() * normal);
-
-					vecOfPairs[k].first->SetVelocity(vecOfPairs[k].first->Velocity() + dVel1);
-					vecOfPairs[k].second->SetVelocity(vecOfPairs[k].second->Velocity() + dVel2);
-				}
-			}
-			//for (int j = i + 1; j < particles.size(); j++)
-			//{
-			//	if (DetectCollisionBetweenSpheres(particles[i], particles[j]))
-			//	{
-			//		counterOfCollision++;
-			//		ResolveStaticCollision(particles[i], particles[j]);
-
-			//		vec3 normal = glm::normalize(particles[j].Position() - particles[i].Position());
-
-			//		float meff = 1 / ((1 / particles[i].Mass()) + (1 / particles[j].Mass()));
-
-			//		float impactSpeed = glm::dot(normal, (particles[i].Velocity() - particles[j].Velocity()));
-
-			//		float impulse = (1 + 0.85) * meff * impactSpeed;
-
-			//		vec3 dVel1 = -(impulse / particles[i].Mass() * normal);
-			//		vec3 dVel2 = +(impulse / particles[j].Mass() * normal);
-
-			//		particles[i].SetVelocity(particles[i].Velocity() + dVel1);
-			//		particles[j].SetVelocity(particles[j].Velocity() + dVel2);
-			//	}
-			//}
-
 		}
+
+		vec3 s = vec3(0.0f), s2 = vec3(0.0f), v;
+
+		std::sort(particles.begin(), particles.end(), compareParticles);
+
+		// TODO: Create functions to clear up the code.
+		for (int i = 0; i < particles.size(); i++)
+		{
+			for(int c = 0; c < 3; c++)
+			{
+				s[c] += particles[i].Position()[c];
+				s2[c] += particles[i].Position()[c] * particles[i].Position()[c];
+			}
+
+			for(int j = i + 1; j < particles.size(); j++)
+			{
+				if (particles[j].minEndPoints[sortAxis] > particles[i].maxEndPoints[sortAxis])
+					break;
+				if (particles[i].maxEndPoints[sortAxis] > particles[j].minEndPoints[sortAxis])
+				{
+					if(DetectCollisionBetweenSpheres(particles[i], particles[j]))
+					{
+						ResolveStaticCollision(particles[i], particles[j]);
+
+						vec3 normal = glm::normalize(particles[j].Position() - particles[i].Position());
+
+						float meff = 1 / ((1 / particles[i].Mass()) + (1 / particles[j].Mass()));
+
+						float impactSpeed = glm::dot(normal, (particles[i].Velocity() - particles[j].Velocity()));
+
+						float impulse = (1 + 0.85) * meff * impactSpeed;
+
+						vec3 dVel1 = -(impulse / particles[i].Mass() * normal);
+						vec3 dVel2 = +(impulse / particles[j].Mass() * normal);
+
+						particles[i].SetVelocity(particles[i].Velocity() + dVel1);
+						particles[j].SetVelocity(particles[j].Velocity() + dVel2);
+					}
+
+				}
+
+			}
+		}
+
+		for (int c = 0; c < 3; c++)
+			v[c] = s2[c] - s[c] * s[c] / particles.size();
+
+
+		sortAxis = 0;
+		if (v[1] > v[0]) sortAxis = 1;
+		if (v[2] > v[sortAxis]) sortAxis = 2;
 
 	}
 
