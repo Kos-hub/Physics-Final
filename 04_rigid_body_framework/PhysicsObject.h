@@ -16,12 +16,7 @@ class Force;
 class PhysicsBody
 {
 public:
-	struct EndPoint {
-		float EndPointValue;
-		bool isMin;
-		int axis;
-		PhysicsBody* Owner;
-	};
+
 	// If we're going to derive from this class, create a virtual destructor that does nothing
 	virtual ~PhysicsBody() {}
 
@@ -67,62 +62,6 @@ public:
 	void SetPosition(const glm::vec3& position)
 	{
 		m_position = position;
-
-		// Recalculate EPs everytime position updates.
-		// Min End Points
-		for (int i = 0; i < 3; i++)
-		{
-			if (i == 0)
-			{
-				endPointsXAxis[0].EndPointValue = m_position[i] - m_scale[i];
-				endPointsXAxis[0].Owner = this;
-				endPointsXAxis[0].axis = i;
-				endPointsXAxis[0].isMin = true;
-			}
-			else if (i == 1)
-			{
-				endPointsYAxis[0].EndPointValue = m_position[i] - m_scale[i];
-				endPointsYAxis[0].Owner = this;
-				endPointsYAxis[0].axis = i;
-				endPointsXAxis[0].isMin = true;
-
-			}
-			else 
-			{
-				endPointsZAxis[0].EndPointValue = m_position[i] - m_scale[i];
-				endPointsZAxis[0].Owner = this;
-				endPointsZAxis[0].axis = i;
-				endPointsXAxis[0].isMin = true;
-
-			}
-		}
-		// Max End Points
-		for (int i = 0; i < 3; i++)
-		{
-			if (i == 0)
-			{
-				endPointsXAxis[1].EndPointValue = m_position[i] + m_scale[i];
-				endPointsXAxis[1].Owner = this;
-				endPointsXAxis[1].axis = i;
-				endPointsXAxis[1].isMin = false;
-			}
-			else if (i == 1)
-			{
-				endPointsYAxis[1].EndPointValue = m_position[i] + m_scale[i];
-				endPointsYAxis[1].Owner = this;
-				endPointsYAxis[1].axis = i;
-				endPointsXAxis[1].isMin = false;
-
-			}
-			else
-			{
-				endPointsZAxis[1].EndPointValue = m_position[i] + m_scale[i];
-				endPointsZAxis[1].Owner = this;
-				endPointsZAxis[1].axis = i;
-				endPointsXAxis[1].isMin = false;
-
-			}
-		}
 	}
 
 	virtual void SetScale(const glm::vec3& scale)
@@ -156,9 +95,6 @@ public:
 		return translateMatrix * m_orientation * scaleMatrix;
 	}
 
-	EndPoint endPointsXAxis[2];
-	EndPoint endPointsYAxis[2];
-	EndPoint endPointsZAxis[2];
 
 private:
 
@@ -182,6 +118,12 @@ private:
 class Particle : public PhysicsBody
 {
 public:
+	struct EndPoint {
+		float EndPointValue;
+		bool isMin;
+		int axis;
+		Particle* Owner;
+	};
 
 	void SetCoefficientOfRestitution(float cor) { m_cor = cor; }
 	virtual void SetMass(float mass) { m_mass = mass; }
@@ -193,7 +135,66 @@ public:
 	void ApplyForce(const glm::vec3& force) { m_accumulatedForce += force; }
 	// Adds to the sum of impulses
 	void ApplyImpulse(const glm::vec3& impulse) { m_accumulatedImpulse += impulse; }
-	
+
+	void SetPosition(const glm::vec3& position)
+	{
+		PhysicsBody::SetPosition(position);
+		// Recalculate EPs everytime position updates.
+		// Min End Points
+		for (int i = 0; i < 3; i++)
+		{
+			if (i == 0)
+			{
+				endPointsXAxis[0].EndPointValue = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
+				endPointsXAxis[0].Owner = this;
+				endPointsXAxis[0].axis = i;
+				endPointsXAxis[0].isMin = true;
+			}
+			else if (i == 1)
+			{
+				endPointsYAxis[0].EndPointValue = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
+				endPointsYAxis[0].Owner = this;
+				endPointsYAxis[0].axis = i;
+				endPointsYAxis[0].isMin = true;
+
+			}
+			else
+			{
+				endPointsZAxis[0].EndPointValue = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
+				endPointsZAxis[0].Owner = this;
+				endPointsZAxis[0].axis = i;
+				endPointsZAxis[0].isMin = true;
+
+			}
+		}
+		// Max End Points
+		for (int i = 0; i < 3; i++)
+		{
+			if (i == 0)
+			{
+				endPointsXAxis[1].EndPointValue = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
+				endPointsXAxis[1].Owner = this;
+				endPointsXAxis[1].axis = i;
+				endPointsXAxis[1].isMin = false;
+			}
+			else if (i == 1)
+			{
+				endPointsYAxis[1].EndPointValue = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
+				endPointsYAxis[1].Owner = this;
+				endPointsYAxis[1].axis = i;
+				endPointsYAxis[1].isMin = false;
+
+			}
+			else
+			{
+				endPointsZAxis[1].EndPointValue = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
+				endPointsZAxis[1].Owner = this;
+				endPointsZAxis[1].axis = i;
+				endPointsZAxis[1].isMin = false;
+
+			}
+		}
+	}
 	
 	float Mass() const { return m_mass; }
 	const glm::vec3& Velocity() const { return m_velocity; }
@@ -201,6 +202,10 @@ public:
 	const glm::vec3& AccumulatedImpulse() { return m_accumulatedImpulse; }
 	float CoefficientOfRestitution() { return m_cor; }
 
+
+	EndPoint endPointsXAxis[2];
+	EndPoint endPointsYAxis[2];
+	EndPoint endPointsZAxis[2];
 private:
 	float m_cor = 0.9f;									// Coefficient of restitution
 	float m_mass = 1.0f;								// Particle mass, in kg
