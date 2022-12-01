@@ -148,7 +148,7 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 	ground.SetScale(vec3(30.0f));
 	//ground.SetPosition(vec3(ground.Position().x, -30.0f * 2.0f, ground.Position().z));
 	srand(1);
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 700; i++)
 	{
 		Particle p;
 		p.SetMesh(meshDb.Get("sphere"));
