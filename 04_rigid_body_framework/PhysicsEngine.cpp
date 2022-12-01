@@ -59,7 +59,7 @@ void CollisionImpulse(Particle& p, const glm::vec3 cubeCentre, float cubeHalfExt
 	{
 		if (p.Position()[i] + p.Scale()[i] >= (cubeCentre[i] + cubeHalfExtent))
 		{
-			surfaceNorm = vec3(0.0f);
+			//surfaceNorm = vec3(0.0f);
 			surfaceNorm[i] = -1.0f;
 			if (i == 0)
 			{
@@ -76,7 +76,7 @@ void CollisionImpulse(Particle& p, const glm::vec3 cubeCentre, float cubeHalfExt
 		}
 		else if (p.Position()[i] - p.Scale()[i] <= (cubeCentre[i] - cubeHalfExtent))
 		{
-			surfaceNorm = vec3(0.0f);
+			//surfaceNorm = vec3(0.0f);
 			surfaceNorm[i] = 1.0f;
 
 			if (i == 0)
@@ -142,31 +142,33 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 	ground.SetMesh(meshDb.Get("cube"));
 	ground.SetShader(defaultShader);
 	ground.SetScale(vec3(30.0f));
-	for (int i = 0; i < 100; i++)
+	srand(1);
+	for (int i = 0; i < 2; i++)
 	{
 		Particle p;
 		p.SetMesh(meshDb.Get("sphere"));
 		p.SetShader(defaultShader);
 
-		p.SetColor(vec4(1, 0, 0, 1));
+		p.SetColor(vec4((float)rand()/RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX, 1));
 		p.SetScale(vec3(1.0f));
+		
+		p.SetPosition(vec3( -30 + (rand() % 59), -30 + (rand() % 59), -30 + (rand() % 59)));
 
-		p.SetPosition(vec3(-30 + (rand() % 30), -30 + (rand() % 30), -30 + (rand() % 30)));
-
+		p.SetVelocity(vec3(-20 + rand() % 39, -20 + rand() % 39, -20 + rand() % 39));
 		particles.push_back(p);
 	}
 
-	particles[0].SetScale(vec3(1.0f));
-	particles[1].SetScale(vec3(2.0f));
-	particles[2].SetScale(vec3(3.0f));
+	//particles[0].SetScale(vec3(1.0f));
+	particles[0].SetScale(vec3(2.0f));
+	particles[1].SetScale(vec3(3.0f));
 
-	particles[0].SetPosition(vec3(0.0f, 0.0f, 0.0f));
-	particles[1].SetPosition(vec3(5.0f, 0.0f, 0.0f));
-	particles[2].SetPosition(vec3(-5.0f, 0.0f, 0.0f));
+	//particles[0].SetPosition(vec3(0.0f, 0.0f, 0.0f));
+	particles[0].SetPosition(vec3(5.0f, -2.0f, 0.0f));
+	particles[1].SetPosition(vec3(-5.0f, 0.0f, 0.0f));
 
+	//particles[0].SetVelocity(vec3(0.0f, 0.0f, 0.0f));
 	particles[0].SetVelocity(vec3(0.0f, 0.0f, 0.0f));
-	particles[1].SetVelocity(vec3(-20.0f, 0.0f, 0.0f));
-	particles[2].SetVelocity(vec3(20.0f, 0.0f, 0.0f));
+	particles[1].SetVelocity(vec3(20.0f, 0.0f, 0.0f));
 
 
 
@@ -185,7 +187,7 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 			particles[i].ClearForcesImpulses();
 
 
-			Force::Gravity(particles[i]);
+			//Force::Gravity(particles[i]);
 
 			vec3 acceleration = particles[i].AccumulatedForce() / particles[i].Mass();
 
@@ -196,6 +198,7 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 			particles[i].SetPosition(position);
 			particles[i].SetVelocity(velocity);
 
+			
 			CollisionImpulse(particles[i], vec3(0.0f), 30.0f, 0.85f);
 
 		}
@@ -227,12 +230,12 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 
 						float meff = 1 / ((1 / particles[i].Mass()) + (1 / particles[j].Mass()));
 
-						float impactSpeed = glm::dot(normal, (particles[i].Velocity() - particles[j].Velocity()));
+						float impactSpeed = glm::dot(normal, (particles[j].Velocity() - particles[i].Velocity()));
 
 						float impulse = (1 + 0.85) * meff * impactSpeed;
 
-						vec3 dVel1 = -(impulse / particles[i].Mass() * normal);
-						vec3 dVel2 = +(impulse / particles[j].Mass() * normal);
+						vec3 dVel1 = +(impulse / particles[i].Mass() * normal);
+						vec3 dVel2 = -(impulse / particles[j].Mass() * normal);
 
 						particles[i].SetVelocity(particles[i].Velocity() + dVel1);
 						particles[j].SetVelocity(particles[j].Velocity() + dVel2);
