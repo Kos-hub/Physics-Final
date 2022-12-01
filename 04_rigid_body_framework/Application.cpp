@@ -185,8 +185,8 @@ void Application::MainLoop() {
 	double currentTime = (GLfloat)glfwGetTime();
 	double accumulator = 0.0f;
 
-	float frameAcc = 0.0f;
-	float frameCounter = 0.0f;
+	//float frameAcc = 0.0f;
+	//float frameCounter = 0.0f;
 
 	while (!glfwWindowShouldClose(m_window))
 	{
@@ -216,24 +216,24 @@ void Application::MainLoop() {
 		auto projection = glm::perspective(camera.GetZoom(), (GLfloat)m_width / (GLfloat)m_height, 0.1f, 1000.0f);
 		auto view = camera.GetViewMatrix();
 
-		if(frameAcc >= 1.0f)
-		{
-			std::cout << "FPS " << frameCounter << std::endl;
-			frameAcc = 0.0f;
-			frameCounter = 0.0f;
-		}
+		//if(frameAcc >= 1.0f)
+		//{
+		//	std::cout << "FPS " << frameCounter << std::endl;
+		//	frameAcc = 0.0f;
+		//	frameCounter = 0.0f;
+		//}
 
 		while (accumulator >= dt)
 		{
 			// Update the physics
 			m_physEngine.Update(dt, t);
-			frameAcc += dt;
+			//frameAcc += dt;
 			accumulator -= dt;
 			t += dt;
 		}
 		// Draw all the objects in the physics engine
 		m_physEngine.Display(view, projection);
-		frameCounter++;
+		//frameCounter++;
 		// Swap the buffers
 		glfwSwapBuffers(m_window);
 	}
