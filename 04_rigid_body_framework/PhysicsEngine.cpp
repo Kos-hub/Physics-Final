@@ -14,13 +14,10 @@
 using namespace glm;
 
 const glm::vec3 GRAVITY = glm::vec3(0, -9.81, 0);
-
-
 int sortAxis = 0;
-
 MeshDb* tempMeshDb;
 ShaderDb* tempShaderDb;
-
+const float COEFF_OF_RESTITUTION = 0.85f;
 
 
 bool compareParticles(Particle& p1, Particle& p2)
@@ -125,7 +122,7 @@ void CalculateImpulseBetweenSpheres(Particle& p1, Particle& p2)
 
 	float impactSpeed = glm::dot(normal, (p2.Velocity() - p1.Velocity()));
 
-	float impulse = (1 + 0.85) * meff * impactSpeed;
+	float impulse = (1 + COEFF_OF_RESTITUTION) * meff * impactSpeed;
 
 	vec3 dVel1 = +(impulse / p1.Mass() * normal);
 	vec3 dVel2 = -(impulse / p2.Mass() * normal);
@@ -254,7 +251,7 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 		particles[i].SetVelocity(velocity);
 
 		
-		CollisionImpulse(particles[i], vec3(0.0f), 30.0f, 0.85f);
+		CollisionImpulse(particles[i], vec3(0.0f), 30.0f, COEFF_OF_RESTITUTION);
 
 	}
 
