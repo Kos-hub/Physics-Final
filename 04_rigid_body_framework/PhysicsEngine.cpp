@@ -15,35 +15,19 @@ using namespace glm;
 
 const glm::vec3 GRAVITY = glm::vec3(0, -9.81, 0);
 
-bool stop = false;
 
 int sortAxis = 0;
-//bool CompareEndPoints(Particle::EndPoint a, Particle::EndPoint b)
-//{
-//	return a.EndPointValue < b.EndPointValue;
-//}
-//
-//void GenerateAndSortAxes(std::vector<Particle>& particles, std::vector<Particle::EndPoint>& endPointsXAxis, std::vector<Particle::EndPoint>& endPointsYAxis, std::vector<Particle::EndPoint>& endPointsZAxis)
-//{
-//	// Generate a list of all minEPs and maxEPs for each particle in the list
-//	for (int i = 0; i < particles.size(); i++)
-//	{
-//		endPointsXAxis.insert(endPointsXAxis.end(), std::begin(particles[i].endPointsXAxis), std::end(particles[i].endPointsXAxis));
-//
-//		endPointsYAxis.insert(endPointsYAxis.end(), std::begin(particles[i].endPointsYAxis), std::end(particles[i].endPointsYAxis));
-//
-//		endPointsZAxis.insert(endPointsZAxis.end(), std::begin(particles[i].endPointsZAxis), std::end(particles[i].endPointsZAxis));
-//	}
-//
-//	std::sort(endPointsXAxis.begin(), endPointsXAxis.end(), CompareEndPoints);
-//	std::sort(endPointsYAxis.begin(), endPointsYAxis.end(), CompareEndPoints);
-//	std::sort(endPointsZAxis.begin(), endPointsZAxis.end(), CompareEndPoints);
-//}
+
+MeshDb* tempMeshDb;
+ShaderDb* tempShaderDb;
+
+
 
 bool compareParticles(Particle& p1, Particle& p2)
 {
 	return p1.minEndPoints[sortAxis] < p2.minEndPoints[sortAxis];
 }
+
 void SymplecticEuler(vec3& pos, vec3& vel, float mass, const vec3& accel, const vec3& impulse, float dt)
 {
 	vel += accel * dt;
@@ -131,6 +115,61 @@ void ResolveStaticCollision(Particle& p1, Particle& p2)
 	p2.SetPosition(vec3(p2.Position().x + newPosX, p2.Position().y + newPosY, p2.Position().z + newPosZ));
 }
 
+void CalculateImpulseBetweenSpheres(Particle& p1, Particle& p2)
+{
+	vec3 test = p2.Position() - p1.Position();
+
+	vec3 normal = glm::normalize(p2.Position() - p1.Position());
+
+	float meff = 1 / ((1 / p1.Mass()) + (1 / p2.Mass()));
+
+	float impactSpeed = glm::dot(normal, (p2.Velocity() - p1.Velocity()));
+
+	float impulse = (1 + 0.85) * meff * impactSpeed;
+
+	vec3 dVel1 = +(impulse / p1.Mass() * normal);
+	vec3 dVel2 = -(impulse / p2.Mass() * normal);
+
+	p1.SetVelocity(p1.Velocity() + dVel1);
+	p2.SetVelocity(p2.Velocity() + dVel2);
+}
+
+void PhysicsEngine::AddRandomSphere()
+{
+	Particle randPart;
+	randPart.SetMesh(tempMeshDb->Get("sphere"));
+	randPart.SetShader(tempShaderDb->Get("default"));
+
+	int whichRGB = rand() % 3;
+	vec4 color = vec4(0, 0, 0, 1);
+	color[whichRGB] = 1;
+
+	if (whichRGB == 0)
+	{
+		randPart.SetMass(1);
+		randPart.SetScale(vec3(1.0f));
+	}
+	if (whichRGB == 1)
+	{
+		randPart.SetMass(2);
+		randPart.SetScale(vec3(2.0f));
+	}
+
+	if (whichRGB == 2)
+	{
+		randPart.SetMass(3);
+		randPart.SetScale(vec3(3.0f));
+	}
+
+	randPart.SetColor(color);
+
+	randPart.SetPosition(vec3(-30 + (rand() % 59), -15 + (rand() % 29), -30 + (rand() % 59)));
+
+	randPart.SetVelocity(vec3(-20 + rand() % 39, -20 + rand() % 39, -20 + rand() % 39));
+	particles.push_back(randPart);
+
+}
+
 // This is called once
 void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 {
@@ -142,13 +181,21 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 	meshDb.Add("sphere", Mesh(MeshDataFromWavefrontObj("resources/models/sphere.obj")));
 	meshDb.Add("cone", Mesh(MeshDataFromWavefrontObj("resources/models/cone.obj")));
 
+	tempMeshDb = &meshDb;
+	tempShaderDb = &shaderDb;
+
+
+
 	// Initialise ground
 	ground.SetMesh(meshDb.Get("cube"));
 	ground.SetShader(defaultShader);
 	ground.SetScale(vec3(30.0f));
-	//ground.SetPosition(vec3(ground.Position().x, -30.0f * 2.0f, ground.Position().z));
+	ground.SetPosition(vec3(ground.Position().x, -30.0f * 2.0f, ground.Position().z));
+
+
+
 	srand(1);
-	for (int i = 0; i < 700; i++)
+	for (int i = 0; i < 200; i++)
 	{
 		Particle p;
 		p.SetMesh(meshDb.Get("sphere"));
@@ -159,15 +206,23 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 		color[whichRGB] = 1;
 
 		if(whichRGB == 0)
+		{
 			p.SetMass(1);
+			p.SetScale(vec3(1.0f));
+		}
 		if (whichRGB == 1)
+		{
 			p.SetMass(2);
+			p.SetScale(vec3(2.0f));
+		}
 		if (whichRGB == 2)
+		{
 			p.SetMass(3);
+			p.SetScale(vec3(3.0f));
+		}
 
 
 		p.SetColor(color);
-		p.SetScale(vec3(1.0f));
 		
 		p.SetPosition(vec3( -30 + (rand() % 59), -30 + (rand() % 59), -30 + (rand() % 59)));
 
@@ -176,95 +231,71 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 	}
 
 
-	camera = Camera(vec3(0, 5, 10));
+	camera = Camera(vec3(0, 5, 30));
 }
 
 // This is called every frame
 void PhysicsEngine::Update(float deltaTime, float totalTime)
 {
-	if(true)
+	for (int i = 0; i < particles.size(); i++)
 	{
-		for (int i = 0; i < particles.size(); i++)
-		{
-			particles[i].ClearForcesImpulses();
+		particles[i].ClearForcesImpulses();
 
 
-			Force::Gravity(particles[i]);
+		Force::Gravity(particles[i]);
 
-			vec3 acceleration = particles[i].AccumulatedForce() / particles[i].Mass();
+		vec3 acceleration = particles[i].AccumulatedForce() / particles[i].Mass();
 
-			vec3 position = particles[i].Position();
-			vec3 velocity = particles[i].Velocity();
-			SymplecticEuler(position, velocity, particles[i].Mass(), acceleration, particles[i].AccumulatedImpulse(), deltaTime);
+		vec3 position = particles[i].Position();
+		vec3 velocity = particles[i].Velocity();
+		SymplecticEuler(position, velocity, particles[i].Mass(), acceleration, particles[i].AccumulatedImpulse(), deltaTime);
 
-			particles[i].SetPosition(position);
-			particles[i].SetVelocity(velocity);
+		particles[i].SetPosition(position);
+		particles[i].SetVelocity(velocity);
 
-			
-			CollisionImpulse(particles[i], vec3(0.0f), ground.Scale().x, 0.85f);
-
-		}
-
-		vec3 s = vec3(0.0f), s2 = vec3(0.0f), v;
-
-		std::sort(particles.begin(), particles.end(), compareParticles);
-
-		// TODO: Create functions to clear up the code.
-		for (int i = 0; i < particles.size(); i++)
-		{
-			for(int c = 0; c < 3; c++)
-			{
-				s[c] += particles[i].Position()[c];
-				s2[c] += particles[i].Position()[c] * particles[i].Position()[c];
-			}
-
-			for(int j = i + 1; j < particles.size(); j++)
-			{
-				if (particles[j].minEndPoints[sortAxis] > particles[i].maxEndPoints[sortAxis])
-					break;
-				if (particles[i].maxEndPoints[sortAxis] >= particles[j].minEndPoints[sortAxis])
-				{
-					if(DetectCollisionBetweenSpheres(particles[i], particles[j]))
-					{
-						ResolveStaticCollision(particles[i], particles[j]);
-
-						vec3 test = particles[j].Position() - particles[i].Position();
-
-						vec3 normal = glm::normalize(particles[j].Position() - particles[i].Position());
-
-						float meff = 1 / ((1 / particles[i].Mass()) + (1 / particles[j].Mass()));
-
-						float impactSpeed = glm::dot(normal, (particles[j].Velocity() - particles[i].Velocity()));
-
-						float impulse = (1 + 0.85) * meff * impactSpeed;
-
-						vec3 dVel1 = +(impulse / particles[i].Mass() * normal);
-						vec3 dVel2 = -(impulse / particles[j].Mass() * normal);
-
-						particles[i].SetVelocity(particles[i].Velocity() + dVel1);
-						particles[j].SetVelocity(particles[j].Velocity() + dVel2);
-					}
-
-				}
-
-			}
-		}
-
-		for (int c = 0; c < 3; c++)
-			v[c] = s2[c] - s[c] * s[c] / particles.size();
-
-
-		sortAxis = 0;
-		if (v[1] > v[0]) sortAxis = 1;
-		if (v[2] > v[sortAxis]) sortAxis = 2;
+		
+		CollisionImpulse(particles[i], vec3(0.0f), 30.0f, 0.85f);
 
 	}
 
+	vec3 s = vec3(0.0f), s2 = vec3(0.0f), v;
+
+	std::sort(particles.begin(), particles.end(), compareParticles);
+
+	// TODO: Create functions to clear up the code.
+	for (int i = 0; i < particles.size(); i++)
+	{
+		for(int c = 0; c < 3; c++)
+		{
+			s[c] += particles[i].Position()[c];
+			s2[c] += particles[i].Position()[c] * particles[i].Position()[c];
+		}
+
+		for(int j = i + 1; j < particles.size(); j++)
+		{
+			if (particles[j].minEndPoints[sortAxis] > particles[i].maxEndPoints[sortAxis])
+				break;
+			if (particles[i].maxEndPoints[sortAxis] >= particles[j].minEndPoints[sortAxis])
+			{
+				if(DetectCollisionBetweenSpheres(particles[i], particles[j]))
+				{
+					ResolveStaticCollision(particles[i], particles[j]);
+
+					CalculateImpulseBetweenSpheres(particles[i], particles[j]);
+				}
+
+			}
+
+		}
+	}
+
+	for (int c = 0; c < 3; c++)
+		v[c] = s2[c] - s[c] * s[c] / particles.size();
 
 
-
-
-
+	sortAxis = 0;
+	if (v[1] > v[0]) sortAxis = 1;
+	if (v[2] > v[sortAxis]) sortAxis = 2;
 
 }
 
@@ -280,9 +311,9 @@ void PhysicsEngine::HandleInputKey(int keyCode, bool pressed)
 {
 	switch (keyCode)
 	{
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// TODO: Add any task swapping keys here
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	case GLFW_KEY_SPACE:
+		if (pressed)
+			AddRandomSphere();
 	default:
 		break;
 	}
