@@ -193,7 +193,6 @@ void Application::MainLoop() {
 		currentTime = newTime;
 
 		accumulator += frameTime;
-
 		// poll input events
 		glfwPollEvents();
 
@@ -222,7 +221,6 @@ void Application::MainLoop() {
 		}
 		// Draw all the objects in the physics engine
 		m_physEngine.Display(view, projection);
-
 		// Swap the buffers
 		glfwSwapBuffers(m_window);
 	}
