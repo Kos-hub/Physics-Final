@@ -20,17 +20,20 @@ ShaderDb* tempShaderDb;
 const float COEFF_OF_RESTITUTION = 0.85f;
 
 
+// Helper function for comparing Particles
 bool compareParticles(Particle& p1, Particle& p2)
 {
 	return p1.minEndPoints[sortAxis] < p2.minEndPoints[sortAxis];
 }
 
+// Symplectic integration
 void SymplecticEuler(vec3& pos, vec3& vel, float mass, const vec3& accel, const vec3& impulse, float dt)
 {
 	vel += accel * dt;
 	pos += vel * dt;
 }
 
+// Collisions between boundaries
 void CollisionImpulse(Particle& p, const glm::vec3 cubeCentre, float cubeHalfExtent, float coeffOfRestitution)
 {
 	vec3 impulse{ 0.0f };
@@ -79,6 +82,7 @@ void CollisionImpulse(Particle& p, const glm::vec3 cubeCentre, float cubeHalfExt
 	p.SetVelocity(p.Velocity() + impulse / p.Mass());
 }
 
+// Detecting collisions between spheres.
 bool DetectCollisionBetweenSpheres(Particle& p1, Particle& p2)
 {
 	// Squared distance between centers
@@ -91,18 +95,21 @@ bool DetectCollisionBetweenSpheres(Particle& p1, Particle& p2)
 	return distance <= radiusSum * radiusSum;
 }
 
+// Shifting the Spheres after detecting collision.
 void ResolveStaticCollision(Particle& p1, Particle& p2)
 {
 	float distance = glm::distance(p1.Position(), p2.Position());
 
-	float overlap = 0.5f * (distance - p1.Scale().x - p2.Scale().y);
-
-
-	vec3 test = p1.Position() - p2.Position();
-	if (test.length() == 0)
-		std::cout << "Static coll Null " << std::endl;
+	if (distance == 0.0f)
+	{
+		p1.SetPosition(vec3(p1.Position().x + 0.1f, p1.Position().y, p1.Position().z));
+		distance = glm::distance(p1.Position(), p2.Position());
+	}
+	
+	float overlap = 0.5f * (distance - p1.Scale().x - p2.Scale().x);
 
 	vec3 dir = glm::normalize(p1.Position() - p2.Position());
+
 	float newPosX = overlap * dir.x;
 	float newPosY = overlap * dir.y;
 	float newPosZ = overlap * dir.z;
@@ -112,10 +119,9 @@ void ResolveStaticCollision(Particle& p1, Particle& p2)
 	p2.SetPosition(vec3(p2.Position().x + newPosX, p2.Position().y + newPosY, p2.Position().z + newPosZ));
 }
 
+// Calculating the impulse between spheres.
 void CalculateImpulseBetweenSpheres(Particle& p1, Particle& p2)
 {
-	vec3 test = p2.Position() - p1.Position();
-
 	vec3 normal = glm::normalize(p2.Position() - p1.Position());
 
 	float meff = 1 / ((1 / p1.Mass()) + (1 / p2.Mass()));
@@ -131,6 +137,7 @@ void CalculateImpulseBetweenSpheres(Particle& p1, Particle& p2)
 	p2.SetVelocity(p2.Velocity() + dVel2);
 }
 
+// Function that adds a random sphere in a random position.
 void PhysicsEngine::AddRandomSphere()
 {
 	Particle randPart;
@@ -198,10 +205,14 @@ void PhysicsEngine::Init(Camera& camera, MeshDb& meshDb, ShaderDb& shaderDb)
 		p.SetMesh(meshDb.Get("sphere"));
 		p.SetShader(defaultShader);
 
+		// Getting a random value between 0 and 3
 		int whichRGB = rand() % 3;
 		vec4 color = vec4(0, 0, 0, 1);
+
+		// That random value will be either red, green or blue
 		color[whichRGB] = 1;
 
+		// If sphere is red, radius is 1 and mass is 1; if sphere is blue, radius is 2 and mass is 1; if sphere is green, radius is 3 and mass is 3.
 		if(whichRGB == 0)
 		{
 			p.SetMass(1);
@@ -257,11 +268,12 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 
 	vec3 s = vec3(0.0f), s2 = vec3(0.0f), v;
 
+	// Sorting spheres
 	std::sort(particles.begin(), particles.end(), compareParticles);
 
-	// TODO: Create functions to clear up the code.
 	for (int i = 0; i < particles.size(); i++)
 	{
+		// Variance calculations
 		for(int c = 0; c < 3; c++)
 		{
 			s[c] += particles[i].Position()[c];
@@ -286,10 +298,12 @@ void PhysicsEngine::Update(float deltaTime, float totalTime)
 		}
 	}
 
+	// Variance calculations
 	for (int c = 0; c < 3; c++)
 		v[c] = s2[c] - s[c] * s[c] / particles.size();
 
 
+	// Picking one axis based on the variance
 	sortAxis = 0;
 	if (v[1] > v[0]) sortAxis = 1;
 	if (v[2] > v[sortAxis]) sortAxis = 2;
