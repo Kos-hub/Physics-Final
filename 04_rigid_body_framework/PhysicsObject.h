@@ -4,9 +4,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Mesh.h"
+#include <iterator>
+
 class Shader;
 class Mesh;
 class Force;
+
 
 // A generic renderable object, such as a particle or the ground, that we can render, move, rotate, etc
 class PhysicsBody
@@ -34,13 +38,13 @@ public:
 		return m_orientation;
 	}
 
-	const Mesh * GetMesh() const
-	{ 
-		return m_mesh; 
+	const Mesh* GetMesh() const
+	{
+		return m_mesh;
 	}
 
 	// we must initialise it with a mesh and a shader
-	void SetMesh(const Mesh * mesh)
+	void SetMesh(const Mesh* mesh)
 	{
 		m_mesh = mesh;
 	}
@@ -60,7 +64,7 @@ public:
 		m_position = position;
 	}
 
-	void SetScale(const glm::vec3& scale)
+	virtual void SetScale(const glm::vec3& scale)
 	{
 		m_scale = scale;
 	}
@@ -68,6 +72,7 @@ public:
 	void SetOrientation(const glm::mat4& m) {
 		m_orientation = m;
 	}
+
 
 	// translate mesh by a vector
 	void Translate(const glm::vec3& offset)
@@ -77,9 +82,10 @@ public:
 
 	// rotate mesh by an axis,angle pair
 	void Rotate(const float angleInRads, const glm::vec3& axis)
-	{ 
+	{
 		m_orientation = glm::rotate(m_orientation, angleInRads, axis);
-	} 
+
+	}
 
 	// getModel computes the model matrix any time it is required
 	const glm::mat4 ModelMatrix() const
@@ -88,6 +94,7 @@ public:
 		auto scaleMatrix = glm::scale(glm::mat4(1.0f), m_scale);
 		return translateMatrix * m_orientation * scaleMatrix;
 	}
+
 
 private:
 
@@ -104,15 +111,22 @@ private:
 	glm::vec3 m_position = glm::vec3(0.0f);
 	glm::vec3 m_scale = glm::vec3(1.0f);
 	glm::mat4 m_orientation = glm::mat4(1.0f);
+
 };
 
 // A particle is a physics body without shape/size. 
 class Particle : public PhysicsBody
 {
 public:
+	//struct EndPoint {
+	//	float EndPointValue;
+	//	bool isMin;
+	//	int axis;
+	//	Particle* Owner;
+	//};
 
 	void SetCoefficientOfRestitution(float cor) { m_cor = cor; }
-	void SetMass(float mass) { m_mass = mass; }
+	virtual void SetMass(float mass) { m_mass = mass; }
 	void SetVelocity(const glm::vec3& velocity) { m_velocity = velocity; }
 	
 	// Call this at the beginning of a simulation step
@@ -121,7 +135,18 @@ public:
 	void ApplyForce(const glm::vec3& force) { m_accumulatedForce += force; }
 	// Adds to the sum of impulses
 	void ApplyImpulse(const glm::vec3& impulse) { m_accumulatedImpulse += impulse; }
-	
+
+	void SetPosition(const glm::vec3& position)
+	{
+		PhysicsBody::SetPosition(position);
+		// Recalculate EPs everytime position updates.
+		// Min End Points
+		for (int i = 0; i < 3; i++)
+		{
+			minEndPoints[i] = PhysicsBody::Position()[i] - PhysicsBody::Scale()[i];
+			maxEndPoints[i] = PhysicsBody::Position()[i] + PhysicsBody::Scale()[i];
+		}
+	}
 	
 	float Mass() const { return m_mass; }
 	const glm::vec3& Velocity() const { return m_velocity; }
@@ -129,6 +154,8 @@ public:
 	const glm::vec3& AccumulatedImpulse() { return m_accumulatedImpulse; }
 	float CoefficientOfRestitution() { return m_cor; }
 
+	glm::vec3 minEndPoints;
+	glm::vec3 maxEndPoints;
 private:
 	float m_cor = 0.9f;									// Coefficient of restitution
 	float m_mass = 1.0f;								// Particle mass, in kg
@@ -142,12 +169,19 @@ class RigidBody : public Particle
 public:
 	
 	void SetAngularVelocity(const glm::vec3& angVel) { m_angularVelocity = angVel; }
-	//void SetAngularAcceleration(const glm::vec3& angAccel) { m_angularAcceleration = angAccel; }
+	void SetAngularAcceleration(const glm::vec3& angAccel) { m_angularAcceleration = angAccel; }
 
 	const glm::vec3& AngularVelocity() const { return m_angularVelocity; }
-	//const glm::vec3& AngularAcceleration() const { return m_angularAcceleration; }
+	const glm::vec3& AngularAcceleration() const { return m_angularAcceleration; }
+
+	void SetScale(const glm::vec3& scale) override;
+	void SetMass(float mass) override;
+
 	glm::mat3 InverseInertia();
+	glm::mat3 Inertia();
+	void SetInertiaTensor();
 private:
 	glm::vec3 m_angularVelocity = glm::vec3(0.0f);
-	//glm::vec3 m_angularAcceleration = glm::vec3(0.0f);
+	glm::vec3 m_angularAcceleration = glm::vec3(0.0f);
+	glm::mat3 m_inertiaTensor = glm::mat3(1.0f);
 };

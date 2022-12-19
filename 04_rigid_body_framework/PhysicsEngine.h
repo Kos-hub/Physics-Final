@@ -17,8 +17,7 @@ public:
 	void Update(float deltaTime, float totalTime);
 	void Display(const glm::mat4& viewMatrix, const glm::mat4& projMatrix);
 	void HandleInputKey(int keyCode, bool pressed);
-
-
+	void AddRandomSphere();
 private:
 
 	PhysicsBody ground;
