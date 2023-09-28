@@ -2,8 +2,9 @@
 
 This is the Physics-based Simulation final coursework. The project involves creating a scene with spheres that bounce on the floor, on invisible walls and between each other.
 The code uses the Sweep and Prune algorithm as a Collision Detection algorithm.
+![Alt Text](https://github.com/Kos-hub/Physics-Final/blob/main/coursework.gif)
 
-The source code is in the *04_rigid_body_framework*. I had to leave the rest of the projects because otherwise I would get build errors.
+The source code is in the *coursework* folder.
 
 ## Commands
 W - Go forward <br />
