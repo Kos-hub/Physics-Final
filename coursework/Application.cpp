@@ -158,12 +158,13 @@ int Application::InitWindow() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+	glDisable(GL_CULL_FACE);
 	return 1;
 }
 
 // clear buffer
 void Application::MainLoop() {
+
 
 	// Initialise graphics
 	InitWindow();
@@ -174,19 +175,27 @@ void Application::MainLoop() {
 	m_physEngine.Init(camera, meshDb, shaderDb);
 
 	// Prepare some time bookkeeping
-	const GLfloat timeStart = (GLfloat)glfwGetTime(); 
+	const GLfloat timeStart = (GLfloat)glfwGetTime();
 	GLfloat lastFrameTimeSinceStart = 0.0f;
+
+	// Timestep init
+	double t = 0.0;
+	double dt = 1.0f/60.0f;
+
+	double currentTime = (GLfloat)glfwGetTime();
+	double accumulator = 0.0f;
+
+	//float frameAcc = 0.0f;
+	//float frameCounter = 0.0f;
 
 	while (!glfwWindowShouldClose(m_window))
 	{
-		// time elapsed since application start
-		GLfloat timeSinceStart = (GLfloat)glfwGetTime() - timeStart;
+		// Implementing timestep
+		double newTime = (GLfloat)glfwGetTime();
+		double frameTime = newTime - currentTime;
+		currentTime = newTime;
 
-		// calculate the delta time since last frame
-		auto deltaTime = timeSinceStart - lastFrameTimeSinceStart;
-
-		// save the current time since start to the previous time since start, so that we can calculate the elapsed time between the different frames
-		lastFrameTimeSinceStart = timeSinceStart;
+		accumulator += frameTime;
 
 		// poll input events
 		glfwPollEvents();
@@ -197,7 +206,7 @@ void Application::MainLoop() {
 		latestKeyStateChanges.clear();
 
 		// Update camera
-		DoMovement(deltaTime);
+		DoMovement(frameTime);
 
 		// Clear the colorbuffer
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -207,16 +216,28 @@ void Application::MainLoop() {
 		auto projection = glm::perspective(camera.GetZoom(), (GLfloat)m_width / (GLfloat)m_height, 0.1f, 1000.0f);
 		auto view = camera.GetViewMatrix();
 
-		// Update the physics
-		m_physEngine.Update(deltaTime, timeSinceStart);
+		//if(frameAcc >= 1.0f)
+		//{
+		//	std::cout << "FPS " << frameCounter << std::endl;
+		//	frameAcc = 0.0f;
+		//	frameCounter = 0.0f;
+		//}
 
+		while (accumulator >= dt)
+		{
+			// Update the physics
+			m_physEngine.Update(dt, t);
+			//frameAcc += dt;
+			accumulator -= dt;
+			t += dt;
+		}
 		// Draw all the objects in the physics engine
 		m_physEngine.Display(view, projection);
-
+		//frameCounter++;
 		// Swap the buffers
 		glfwSwapBuffers(m_window);
 	}
-	
+
 	glfwTerminate();
 }
 

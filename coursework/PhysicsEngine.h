@@ -17,13 +17,9 @@ public:
 	void Update(float deltaTime, float totalTime);
 	void Display(const glm::mat4& viewMatrix, const glm::mat4& projMatrix);
 	void HandleInputKey(int keyCode, bool pressed);
-
-	void Task1Init();
-	void Task1Update(float deltaTime, float totalTime); // 5-particle chain
-	// ... rest of the tasks here
-
+	void AddRandomSphere();
 private:
 
 	PhysicsBody ground;
-
+	std::vector<Particle> particles;
 };

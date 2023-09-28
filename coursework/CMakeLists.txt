@@ -1,4 +1,4 @@
-project(02_particles_framework)
+project(04_rigid_body_framework)
 cmake_minimum_required(VERSION 3.17)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -6,6 +6,7 @@ set(SOURCE_FILES
     PhysicsEngine.cpp
 	PhysicsObject.cpp
 	Application.cpp
+	Force.cpp
 	Mesh.cpp
 )
 
@@ -16,6 +17,7 @@ set(HEADER_FILES
 	Application.h
 	PhysicsEngine.h
 	PhysicsObject.h
+	Force.h
 )
 
 set(executable_name ${PROJECT_NAME})

@@ -29,7 +29,5 @@ set(LIBRARIES
 	${CMAKE_SOURCE_DIR}/contrib/glew-2.1.0/lib/Release/x64/glew32.lib
 )
 
-add_subdirectory(01_particle_animation)
-add_subdirectory(02_particles_framework)
-add_subdirectory(03_constraints_framework)
-add_subdirectory(04_rigid_body_framework)
+
+add_subdirectory(coursework)

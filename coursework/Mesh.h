@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <vector>
+#include "OBJloader.h"
 
 // Simple mesh data specification, used to initialise a mesh
 struct MeshDataStream
